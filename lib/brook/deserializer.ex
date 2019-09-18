@@ -1,4 +1,4 @@
-defprotocol Brook.Deserializer do
+defprotocol Brook.Deserializer.Protocol do
   @moduledoc """
   The protocol for standard de-serialization of Elixir structs passed
   through the Brook event stream for decoding from the in-transit format.
@@ -19,7 +19,7 @@ defprotocol Brook.Deserializer do
   def deserialize(struct, data)
 end
 
-defimpl Brook.Deserializer, for: Any do
+defimpl Brook.Deserializer.Protocol, for: Any do
   @moduledoc """
   Provide a default implementation for the `Brook.Event.Deserializer`
   protocol that will decode the supplied json to an instance of
@@ -31,8 +31,48 @@ defimpl Brook.Deserializer, for: Any do
   end
 
   def deserialize(%struct_module{}, data) do
-    case Jason.decode(data, keys: :atoms) do
-      {:ok, decoded_json} -> {:ok, struct(struct_module, decoded_json)}
+    {:ok, struct(struct_module, data)}
+  end
+end
+
+defmodule Brook.Deserializer do
+
+  @struct_key "__brook_struct__"
+
+  def deserialize(data) when is_binary(data) do
+    decode(data, &deserialize/1)
+  end
+
+  def deserialize(%{@struct_key => struct} = data) do
+    struct_instance = struct |> String.to_existing_atom() |> struct()
+    deserialize(struct_instance, Map.delete(data, @struct_key))
+  end
+
+  def deserialize(data) do
+    {:ok, data}
+  end
+
+  def deserialize(struct, data) when is_binary(data) do
+    decode(data, &deserialize(struct, &1))
+  end
+
+  def deserialize(:undefined, data) do
+    {:ok, data}
+  end
+
+  def deserialize(struct, data) do
+    Brook.Deserializer.Protocol.deserialize(struct, to_atom_keys(data))
+  end
+
+  defp to_atom_keys(map) do
+    map
+    |> Enum.map(fn {key, value} -> {String.to_existing_atom(key), value} end)
+    |> Map.new()
+  end
+
+  defp decode(json, success_callback) do
+    case Jason.decode(json) do
+      {:ok, decoded_json} -> success_callback.(decoded_json)
       error_result -> error_result
     end
   end
