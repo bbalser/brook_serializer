@@ -44,8 +44,17 @@ defmodule Brook.Deserializer do
   end
 
   def deserialize(%{@struct_key => struct} = data) do
-    struct_instance = struct |> String.to_existing_atom() |> struct()
-    deserialize(struct_instance, Map.delete(data, @struct_key))
+    struct_module = struct |> String.to_atom()
+    Code.ensure_loaded(struct_module)
+
+    case function_exported?(struct_module, :__struct__, 0) do
+      true ->
+        struct_module
+        |> struct()
+        |> deserialize(Map.delete(data, @struct_key))
+      false ->
+        {:error, :invalid_struct}
+    end
   end
 
   def deserialize(data) do
@@ -66,13 +75,14 @@ defmodule Brook.Deserializer do
 
   defp to_atom_keys(map) do
     map
-    |> Enum.map(fn {key, value} -> {String.to_existing_atom(key), value} end)
+    |> Enum.map(fn {key, value} -> {String.to_atom(key), value} end)
     |> Map.new()
   end
 
   defp decode(json, success_callback) do
     case Jason.decode(json) do
-      {:ok, decoded_json} -> success_callback.(decoded_json)
+      {:ok, decoded_json} when is_map(decoded_json) -> success_callback.(decoded_json)
+      {:ok, decoded_json} -> {:ok, decoded_json}
       error_result -> error_result
     end
   end

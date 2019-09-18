@@ -2,13 +2,20 @@ defmodule Brook.DeserializerTest do
   use ExUnit.Case
 
   describe "deserialize/1" do
-    test "decodes input into map" do
+    test "decodes map back into map" do
       input = %{
         "foo" => "bar"
       }
 
       {:ok, input_as_json} = Brook.Serializer.serialize(input)
       assert {:ok, input} == Brook.Deserializer.deserialize(input_as_json)
+    end
+
+    test "decodes strings back into strings" do
+      input = "foobar"
+
+      {:ok, input_as_string} = Brook.Serializer.serialize(input)
+      assert {:ok, input} == Brook.Deserializer.deserialize(input_as_string)
     end
 
     test "returns error tuple when unable to deserialize json" do
