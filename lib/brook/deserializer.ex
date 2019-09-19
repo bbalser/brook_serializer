@@ -26,10 +26,6 @@ defimpl Brook.Deserializer.Protocol, for: Any do
   the provided struct.
   """
 
-  def deserialize(:undefined, data) do
-    Jason.decode(data)
-  end
-
   def deserialize(%struct_module{}, data) do
     {:ok, struct(struct_module, data)}
   end
