@@ -1,4 +1,4 @@
-defprotocol Brook.Serializer do
+defprotocol Brook.Serializer.Protocol do
   @moduledoc """
   The protocol for standard serialization of Elixir structs to
   an in-transit encoding format before sending on the Brook event stream.
@@ -8,24 +8,38 @@ defprotocol Brook.Serializer do
   implement a custom serializer for specific struct types.
   """
 
-  @type type :: atom()
-  @type reason :: term()
   @fallback_to_any true
 
   @doc """
   Convert the supplied Elixir term to an encoded term wrapped in an `:ok` tuple.
   """
-  @spec serialize(term()) :: {:ok, term()} | {:error, reason()}
+  @spec serialize(term()) :: {:ok, term()} | {:error, term()}
   def serialize(data)
 end
 
-defimpl Brook.Serializer, for: Any do
+defimpl Brook.Serializer.Protocol, for: Any do
   @moduledoc """
   Provide a default implementation for the `Brook.Event.Serializer`
   protocol that will encode the supplied term to json.
   """
 
+  @struct_key "__brook_struct__"
+
+  def serialize(%struct{} = data) do
+    data
+    |> Map.from_struct()
+    |> Map.put(@struct_key, struct)
+    |> Jason.encode()
+  end
+
   def serialize(data) do
     Jason.encode(data)
+  end
+end
+
+defmodule Brook.Serializer do
+  @spec serialize(term()) :: {:ok, term()} | {:error, term()}
+  def serialize(data) do
+    Brook.Serializer.Protocol.serialize(data)
   end
 end
