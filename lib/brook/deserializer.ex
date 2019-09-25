@@ -52,11 +52,14 @@ defmodule Brook.Deserializer do
 
     case function_exported?(struct_module, :__struct__, 0) do
       true ->
-        {:ok, new_data} = do_deserialize(Map.delete(data, @struct_key))
+        prepared_data =
+          data
+          |> Map.delete(@struct_key)
+          |> to_atom_keys()
 
         struct_module
         |> struct()
-        |> Brook.Deserializer.Protocol.deserialize(to_atom_keys(new_data))
+        |> Brook.Deserializer.Protocol.deserialize(prepared_data)
 
       false ->
         {:error, :invalid_struct}

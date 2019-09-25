@@ -34,7 +34,6 @@ defimpl Brook.Serializer.Protocol, for: Any do
     data
     |> Map.from_struct()
     |> Map.put(@struct_key, struct)
-    |> do_serialize()
   end
 
   defp do_serialize(%{} = data) do
