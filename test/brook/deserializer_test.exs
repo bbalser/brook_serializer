@@ -51,16 +51,18 @@ defmodule Brook.DeserializerTest do
       assert {:error, :what?} == Brook.Deserializer.deserialize(input_as_json)
     end
 
-    data_test "datetime are preserved" do
+    data_test "elixir structs are preserved" do
       input = %{"data" => data}
 
-      {:ok, serialized_data} = Brook.Serializer.serialize(input) |> IO.inspect(label: "json")
+      {:ok, serialized_data} = Brook.Serializer.serialize(input)
       assert {:ok, input} == Brook.Deserializer.deserialize(serialized_data)
 
       where([
         [:data],
         [DateTime.utc_now()],
-        [NaiveDateTime.utc_now()]
+        [NaiveDateTime.utc_now()],
+        [Date.utc_today()],
+        [Time.utc_now()]
       ])
     end
   end
