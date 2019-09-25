@@ -1,6 +1,7 @@
 defmodule Brook.DeserializerTest do
   use ExUnit.Case
   use Placebo
+  import Checkov
 
   describe "deserialize/1" do
     test "decodes map back into map" do
@@ -48,6 +49,19 @@ defmodule Brook.DeserializerTest do
 
       {:ok, input_as_json} = Brook.Serializer.serialize(input)
       assert {:error, :what?} == Brook.Deserializer.deserialize(input_as_json)
+    end
+
+    data_test "datetime are preserved" do
+      input = %{"data" => data}
+
+      {:ok, serialized_data} = Brook.Serializer.serialize(input) |> IO.inspect(label: "json")
+      assert {:ok, input} == Brook.Deserializer.deserialize(serialized_data)
+
+      where([
+        [:data],
+        [DateTime.utc_now()],
+        [NaiveDateTime.utc_now()]
+      ])
     end
   end
 

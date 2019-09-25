@@ -22,12 +22,26 @@ defimpl Brook.Serializer.Protocol, for: Any do
   Provide a default implementation for the `Brook.Event.Serializer`
   protocol that will encode the supplied term to json.
   """
+  require Logger
 
   @struct_key "__brook_struct__"
+  @custom_transforms %{
+    DateTime => &DateTime.to_iso8601/1,
+    NaiveDateTime => &NaiveDateTime.to_iso8601/1
+  }
+
+  @custom_structs Map.keys(@custom_transforms)
 
   def serialize(data) do
     do_serialize(data)
     |> Jason.encode()
+  end
+
+  defp do_serialize(%struct{} = data) when struct in @custom_structs do
+    %{
+      @struct_key => struct,
+      "value" => Map.get(@custom_transforms, struct).(data)
+    }
   end
 
   defp do_serialize(%struct{} = data) do
