@@ -23,7 +23,8 @@ defmodule Brook.Serializer.MixProject do
   defp deps do
     [
       {:jason, "~> 1.1"},
-      {:ex_doc, "~> 0.20.2", only: [:dev]}
+      {:ex_doc, "~> 0.20.2", only: [:dev]},
+      {:placebo, "~> 1.2", only: [:dev, :test]}
     ]
   end
 

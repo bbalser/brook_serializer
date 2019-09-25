@@ -32,41 +32,55 @@ defimpl Brook.Deserializer.Protocol, for: Any do
 end
 
 defmodule Brook.Deserializer do
-
   @struct_key "__brook_struct__"
 
   def deserialize(data) when is_binary(data) do
-    decode(data, &deserialize/1)
+    decode(data, &do_deserialize/1)
   end
 
-  def deserialize(%{@struct_key => struct} = data) do
+  def deserialize(:undefined, data) when is_binary(data) do
+    decode(data, &do_deserialize/1)
+  end
+
+  def deserialize(struct, data) when is_binary(data) do
+    decode(data, &Brook.Deserializer.Protocol.deserialize(struct, to_atom_keys(&1)))
+  end
+
+  defp do_deserialize(%{@struct_key => struct} = data) do
     struct_module = struct |> String.to_atom()
     Code.ensure_loaded(struct_module)
 
     case function_exported?(struct_module, :__struct__, 0) do
       true ->
+        {:ok, new_data} = do_deserialize(Map.delete(data, @struct_key))
+
         struct_module
         |> struct()
-        |> deserialize(Map.delete(data, @struct_key))
+        |> Brook.Deserializer.Protocol.deserialize(to_atom_keys(new_data))
+
       false ->
         {:error, :invalid_struct}
     end
   end
 
-  def deserialize(data) do
+  defp do_deserialize(%{} = data) do
+    case safe_map(data, &do_deserialize/1) do
+      {:ok, new_data} -> {:ok, Map.new(new_data)}
+      error_result -> error_result
+    end
+  end
+
+  defp do_deserialize(data) do
     {:ok, data}
   end
 
-  def deserialize(struct, data) when is_binary(data) do
-    decode(data, &deserialize(struct, &1))
-  end
-
-  def deserialize(:undefined, data) do
-    {:ok, data}
-  end
-
-  def deserialize(struct, data) do
-    Brook.Deserializer.Protocol.deserialize(struct, to_atom_keys(data))
+  defp safe_map(%{} = enum, function) when is_function(function, 1) do
+    Enum.reduce_while(enum, {:ok, []}, fn {key, value}, {:ok, acc} ->
+      case function.(value) do
+        {:ok, new_value} -> {:cont, {:ok, [{key, new_value} | acc]}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp to_atom_keys(map) do

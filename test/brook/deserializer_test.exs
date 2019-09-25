@@ -1,5 +1,6 @@
 defmodule Brook.DeserializerTest do
   use ExUnit.Case
+  use Placebo
 
   describe "deserialize/1" do
     test "decodes map back into map" do
@@ -35,6 +36,18 @@ defmodule Brook.DeserializerTest do
 
       {:ok, input_as_json} = Brook.Serializer.serialize(input)
       assert {:ok, input} == Brook.Deserializer.deserialize(input_as_json)
+    end
+
+    test "errors bubble up and get returned" do
+      allow Brook.Deserializer.Protocol.deserialize(any(), any()), return: {:error, :what?}
+
+      input = %{
+        "one" => %TestStruct{name: "joe"},
+        "two" => %TestStruct{name: "Pete"}
+      }
+
+      {:ok, input_as_json} = Brook.Serializer.serialize(input)
+      assert {:error, :what?} == Brook.Deserializer.deserialize(input_as_json)
     end
   end
 
