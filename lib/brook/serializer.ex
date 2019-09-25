@@ -25,15 +25,26 @@ defimpl Brook.Serializer.Protocol, for: Any do
 
   @struct_key "__brook_struct__"
 
-  def serialize(%struct{} = data) do
-    data
-    |> Map.from_struct()
-    |> Map.put(@struct_key, struct)
+  def serialize(data) do
+    do_serialize(data)
     |> Jason.encode()
   end
 
-  def serialize(data) do
-    Jason.encode(data)
+  defp do_serialize(%struct{} = data) do
+    data
+    |> Map.from_struct()
+    |> Map.put(@struct_key, struct)
+    |> do_serialize()
+  end
+
+  defp do_serialize(%{} = data) do
+    data
+    |> Enum.map(fn {key, value} -> {key, do_serialize(value)} end)
+    |> Map.new()
+  end
+
+  defp do_serialize(data) do
+    data
   end
 end
 

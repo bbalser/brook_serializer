@@ -27,6 +27,18 @@ defmodule Brook.SerializerTest do
       assert expected == Jason.decode!(result)
     end
 
+    test "encodes/decodes nested structs" do
+      input = %{
+        "one" => %TestStruct{name: "john", age: 21, location: "Columbus"},
+        "two" => %TestStruct{name: "tom", age: 72, location: "Detroit"}
+      }
+
+      {:ok, serialized} = Brook.Serializer.serialize(input)
+      {:ok, deserialized} = Brook.Deserializer.deserialize(serialized)
+
+      assert input == deserialized
+    end
+
     test "returns error tuple when unable to parse input" do
       input = %{
         "one" => {1, 2},
