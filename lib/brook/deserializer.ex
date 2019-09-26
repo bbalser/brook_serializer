@@ -31,6 +31,31 @@ defimpl Brook.Deserializer.Protocol, for: Any do
   end
 end
 
+defimpl Brook.Deserializer.Protocol, for: DateTime do
+  def deserialize(_, %{value: value}) do
+    {:ok, date_time, _} = DateTime.from_iso8601(value)
+    {:ok, date_time}
+  end
+end
+
+defimpl Brook.Deserializer.Protocol, for: NaiveDateTime do
+  def deserialize(_, %{value: value}) do
+    NaiveDateTime.from_iso8601(value)
+  end
+end
+
+defimpl Brook.Deserializer.Protocol, for: Date do
+  def deserialize(_, %{value: value}) do
+    Date.from_iso8601(value)
+  end
+end
+
+defimpl Brook.Deserializer.Protocol, for: Time do
+  def deserialize(_, %{value: value}) do
+    Time.from_iso8601(value)
+  end
+end
+
 defmodule Brook.Deserializer do
   @struct_key "__brook_struct__"
 

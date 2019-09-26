@@ -24,7 +24,8 @@ defmodule Brook.Serializer.MixProject do
     [
       {:jason, "~> 1.1"},
       {:ex_doc, "~> 0.20.2", only: [:dev]},
-      {:placebo, "~> 1.2", only: [:dev, :test]}
+      {:placebo, "~> 1.2", only: [:dev, :test]},
+      {:checkov, "~> 0.4.0", only: [:test]}
     ]
   end
 
