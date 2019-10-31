@@ -56,6 +56,16 @@ defimpl Brook.Serializer.Protocol, for: Map do
   end
 end
 
+defimpl Brook.Serializer.Protocol, for: MapSet do
+  def serialize(map_set) do
+    {:ok,
+     %{
+       Brook.Serializer.struct_key() => MapSet,
+       "values" => MapSet.to_list(map_set)
+     }}
+  end
+end
+
 defimpl Brook.Serializer.Protocol, for: DateTime do
   def serialize(date_time) do
     {:ok,
@@ -68,28 +78,31 @@ end
 
 defimpl Brook.Serializer.Protocol, for: NaiveDateTime do
   def serialize(naive_date_time) do
-    {:ok, %{
-      Brook.Serializer.struct_key() => NaiveDateTime,
-      "value" => NaiveDateTime.to_iso8601(naive_date_time)
-    }}
+    {:ok,
+     %{
+       Brook.Serializer.struct_key() => NaiveDateTime,
+       "value" => NaiveDateTime.to_iso8601(naive_date_time)
+     }}
   end
 end
 
 defimpl Brook.Serializer.Protocol, for: Date do
   def serialize(date) do
-    {:ok, %{
-      Brook.Serializer.struct_key() => Date,
-      "value" => Date.to_iso8601(date)
-    }}
+    {:ok,
+     %{
+       Brook.Serializer.struct_key() => Date,
+       "value" => Date.to_iso8601(date)
+     }}
   end
 end
 
 defimpl Brook.Serializer.Protocol, for: Time do
   def serialize(time) do
-    {:ok, %{
-      Brook.Serializer.struct_key() => Time,
-      "value" => Time.to_iso8601(time)
-    }}
+    {:ok,
+     %{
+       Brook.Serializer.struct_key() => Time,
+       "value" => Time.to_iso8601(time)
+     }}
   end
 end
 

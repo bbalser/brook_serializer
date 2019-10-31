@@ -31,6 +31,12 @@ defimpl Brook.Deserializer.Protocol, for: Any do
   end
 end
 
+defimpl Brook.Deserializer.Protocol, for: MapSet do
+  def deserialize(_, %{values: values}) do
+    {:ok, MapSet.new(values)}
+  end
+end
+
 defimpl Brook.Deserializer.Protocol, for: DateTime do
   def deserialize(_, %{value: value}) do
     {:ok, date_time, _} = DateTime.from_iso8601(value)

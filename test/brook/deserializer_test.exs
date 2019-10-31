@@ -20,6 +20,13 @@ defmodule Brook.DeserializerTest do
       assert {:ok, input} == Brook.Deserializer.deserialize(input_as_string)
     end
 
+    test "decodes mapsets back into mapsets" do
+      input = MapSet.new([1, 2, 3])
+
+      {:ok, input_as_string} = Brook.Serializer.serialize(input)
+      assert {:ok, input} == Brook.Deserializer.deserialize(input_as_string)
+    end
+
     test "returns error tuple when unable to deserialize json" do
       input = "{\"one\": 1)"
 
