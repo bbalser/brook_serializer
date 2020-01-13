@@ -46,6 +46,17 @@ defmodule Brook.DeserializerTest do
       assert {:ok, input} == Brook.Deserializer.deserialize(input_as_json)
     end
 
+    test "decodes input into a struct using new function" do
+      input = %TestStructWithNew{
+        name: "matt",
+        age: 23,
+        location: "Jersey"
+      }
+
+      {:ok, input_as_json} = Brook.Serializer.serialize(input)
+      assert {:ok, Map.put(input, :name, "MATT")} == Brook.Deserializer.deserialize(input_as_json)
+    end
+
     test "errors bubble up and get returned" do
       allow Brook.Deserializer.Protocol.deserialize(any(), any()), return: {:error, :what?}
 
