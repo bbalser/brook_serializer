@@ -27,8 +27,15 @@ defimpl Brook.Deserializer.Protocol, for: Any do
   """
 
   def deserialize(%struct_module{}, data) do
-    {:ok, struct(struct_module, data)}
+    case function_exported?(struct_module, :new, 1) do
+      true -> struct_module.new(data) |> wrap()
+      false -> {:ok, struct(struct_module, data)}
+    end
   end
+
+  defp wrap({:ok, _} = ok), do: ok
+  defp wrap({:error, _} = error), do: error
+  defp wrap(value), do: {:ok, value}
 end
 
 defimpl Brook.Deserializer.Protocol, for: MapSet do
