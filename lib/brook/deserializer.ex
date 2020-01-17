@@ -70,64 +70,62 @@ defimpl Brook.Deserializer.Protocol, for: Time do
 end
 
 defmodule Brook.Deserializer do
-  @struct_key "__brook_struct__"
+  import Brook.Serializer.Util
+
+  defmodule Internal do
+    @struct_key "__brook_struct__"
+    def do_deserialize(%{@struct_key => struct} = data) do
+      struct_module = struct |> String.to_atom()
+      Code.ensure_loaded(struct_module)
+
+      case function_exported?(struct_module, :__struct__, 0) do
+        true ->
+          struct = struct(struct_module)
+
+          data
+          |> Map.delete(@struct_key)
+          |> to_atom_keys()
+          |> safe_transform(fn {key, value} ->
+            Brook.Deserializer.Internal.do_deserialize(value)
+            |> safe_map(fn new_value -> {key, new_value} end)
+          end)
+          |> safe_map(&Map.new/1)
+          |> safe_map(&Brook.Deserializer.Protocol.deserialize(struct, &1))
+
+        false ->
+          {:error, :invalid_struct}
+      end
+    end
+
+    def do_deserialize(%{} = data) do
+      data
+      |> safe_transform(fn {key, value} ->
+        do_deserialize(value)
+        |> safe_map(fn new_value -> {key, new_value} end)
+      end)
+      |> safe_map(&Map.new/1)
+    end
+
+    def do_deserialize(list) when is_list(list) do
+      list
+      |> safe_transform(&do_deserialize/1)
+    end
+
+    def do_deserialize(data) do
+      {:ok, data}
+    end
+  end
 
   def deserialize(data) when is_binary(data) do
-    decode(data, &do_deserialize/1)
+    decode(data, &Internal.do_deserialize/1)
   end
 
   def deserialize(:undefined, data) when is_binary(data) do
-    decode(data, &do_deserialize/1)
+    decode(data, &Internal.do_deserialize/1)
   end
 
   def deserialize(struct, data) when is_binary(data) do
     decode(data, &Brook.Deserializer.Protocol.deserialize(struct, to_atom_keys(&1)))
-  end
-
-  defp do_deserialize(%{@struct_key => struct} = data) do
-    struct_module = struct |> String.to_atom()
-    Code.ensure_loaded(struct_module)
-
-    case function_exported?(struct_module, :__struct__, 0) do
-      true ->
-        prepared_data =
-          data
-          |> Map.delete(@struct_key)
-          |> to_atom_keys()
-
-        struct_module
-        |> struct()
-        |> Brook.Deserializer.Protocol.deserialize(prepared_data)
-
-      false ->
-        {:error, :invalid_struct}
-    end
-  end
-
-  defp do_deserialize(%{} = data) do
-    case safe_map(data, &do_deserialize/1) do
-      {:ok, new_data} -> {:ok, Map.new(new_data)}
-      error_result -> error_result
-    end
-  end
-
-  defp do_deserialize(data) do
-    {:ok, data}
-  end
-
-  defp safe_map(%{} = enum, function) when is_function(function, 1) do
-    Enum.reduce_while(enum, {:ok, []}, fn {key, value}, {:ok, acc} ->
-      case function.(value) do
-        {:ok, new_value} -> {:cont, {:ok, [{key, new_value} | acc]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-  end
-
-  defp to_atom_keys(map) do
-    map
-    |> Enum.map(fn {key, value} -> {String.to_atom(key), value} end)
-    |> Map.new()
   end
 
   defp decode(json, success_callback) do

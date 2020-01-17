@@ -23,12 +23,17 @@ defimpl Brook.Serializer.Protocol, for: Any do
   protocol that will encode the supplied term to json.
   """
   require Logger
+  import Brook.Serializer.Util
 
   def serialize(%struct{} = data) do
     data
     |> Map.from_struct()
-    |> Map.put(Brook.Serializer.struct_key(), struct)
-    |> ok()
+    |> safe_transform(fn {key, value} ->
+      Brook.Serializer.Protocol.serialize(value)
+      |> safe_map(fn new_value -> {key, new_value} end)
+    end)
+    |> safe_map(&Map.new/1)
+    |> safe_map(&Map.put(&1, Brook.Serializer.struct_key(), struct))
   end
 
   def serialize(data) do
@@ -38,21 +43,25 @@ defimpl Brook.Serializer.Protocol, for: Any do
   defp ok(value), do: {:ok, value}
 end
 
-defimpl Brook.Serializer.Protocol, for: Map do
-  def serialize(data) do
-    case safe_map(data, &Brook.Serializer.Protocol.serialize/1) do
-      {:ok, list} -> {:ok, Map.new(list)}
-      error_result -> error_result
-    end
-  end
+defimpl Brook.Serializer.Protocol, for: List do
+  import Brook.Serializer.Util
 
-  defp safe_map(enum, function) when is_function(function, 1) do
-    Enum.reduce_while(enum, {:ok, []}, fn {key, value}, {:ok, acc} ->
-      case function.(value) do
-        {:ok, new_value} -> {:cont, {:ok, [{key, new_value} | acc]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
+  def serialize(list) do
+    list
+    |> safe_transform(&Brook.Serializer.Protocol.serialize/1)
+  end
+end
+
+defimpl Brook.Serializer.Protocol, for: Map do
+  import Brook.Serializer.Util
+
+  def serialize(data) do
+    data
+    |> safe_transform(fn {key, value} ->
+      Brook.Serializer.Protocol.serialize(value)
+      |> safe_map(fn new_value -> {key, new_value} end)
     end)
+    |> safe_map(&Map.new/1)
   end
 end
 
