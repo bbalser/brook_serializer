@@ -45,6 +45,7 @@ end
 
 defimpl Brook.Serializer.Protocol, for: List do
   import Brook.Serializer.Util
+
   def serialize(list) do
     list
     |> safe_transform(&Brook.Serializer.Protocol.serialize/1)
