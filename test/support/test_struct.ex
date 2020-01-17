@@ -17,3 +17,7 @@ defmodule TestStructWithNew do
     struct(__MODULE__, map)
   end
 end
+
+defmodule NestedStruct do
+  defstruct [:name, :list, :map]
+end
