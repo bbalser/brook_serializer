@@ -53,7 +53,9 @@ defmodule Brook.SerializerTest do
 
   test "serializes property with and field is named :error" do
     {:ok, json} = Brook.Serializer.serialize(%{error: "Balser", dataset: "BAsler"})
-    assert {:ok, %{"error" => "Balser", "dataset" => "BAsler"}} == Brook.Deserializer.deserialize(json)
+
+    assert {:ok, %{"error" => "Balser", "dataset" => "BAsler"}} ==
+             Brook.Deserializer.deserialize(json)
   end
 
   defp to_string_keys(map) do
