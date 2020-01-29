@@ -59,7 +59,7 @@ defimpl Brook.Serializer.Protocol, for: Map do
     data
     |> safe_transform(fn {key, value} ->
       Brook.Serializer.Protocol.serialize(value)
-      |> safe_map(fn new_value -> {key, new_value} end)
+      |> safe_map(fn new_value -> {:ok, {key, new_value}} end)
     end)
     |> safe_map(&Map.new/1)
   end
