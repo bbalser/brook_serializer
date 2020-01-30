@@ -51,6 +51,13 @@ defmodule Brook.SerializerTest do
     end
   end
 
+  test "serializes property with and field is named :error" do
+    {:ok, json} = Brook.Serializer.serialize(%{error: "Balser", dataset: "BAsler"})
+
+    assert {:ok, %{"error" => "Balser", "dataset" => "BAsler"}} ==
+             Brook.Deserializer.deserialize(json)
+  end
+
   defp to_string_keys(map) do
     map
     |> Enum.map(fn {key, value} -> {to_string(key), value} end)
