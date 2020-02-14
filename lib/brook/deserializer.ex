@@ -97,6 +97,17 @@ defmodule Brook.Deserializer do
       end
     end
 
+    def do_deserialize(%{"keyword" => true, "list" => list}) do
+      {:ok, list} = do_deserialize(list)
+
+      keyword_list =
+        Enum.map(list, fn [key, val] ->
+          {String.to_atom(key), val}
+        end)
+
+      {:ok, keyword_list}
+    end
+
     def do_deserialize(%{} = data) do
       data
       |> safe_transform(fn {key, value} ->

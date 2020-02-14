@@ -27,6 +27,20 @@ defmodule Brook.DeserializerTest do
       assert {:ok, input} == Brook.Deserializer.deserialize(input_as_string)
     end
 
+    test "decodes regular lists back into lists" do
+      input = ["foo", "bar", 1, ["baz", "qux"]]
+
+      {:ok, input_as_string} = Brook.Serializer.serialize(input)
+      assert {:ok, input} == Brook.Deserializer.deserialize(input_as_string)
+    end
+
+    test "decodes keyword lists back into keyword lists" do
+      input = [foo: "bar", baz: "qux"]
+
+      {:ok, input_as_string} = Brook.Serializer.serialize(input)
+      assert {:ok, input} = Brook.Deserializer.deserialize(input_as_string)
+    end
+
     test "returns error tuple when unable to deserialize json" do
       input = "{\"one\": 1)"
 

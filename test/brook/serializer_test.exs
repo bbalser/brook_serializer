@@ -13,7 +13,7 @@ defmodule Brook.SerializerTest do
       assert {:ok, expected} == Brook.Serializer.serialize(input)
     end
 
-    test "encodes a struct add tracks struct in struct key" do
+    test "encodes a struct and tracks struct in struct key" do
       input = %TestStruct{name: "john", age: 21, location: "Nashville"}
 
       expected =
@@ -37,6 +37,22 @@ defmodule Brook.SerializerTest do
       {:ok, deserialized} = Brook.Deserializer.deserialize(serialized)
 
       assert input == deserialized
+    end
+
+    test "encodes regular lists" do
+      input = [:foo, "bar", :baz, "qux", [:bleep, "bloop"]]
+
+      {:ok, serialized} = Brook.Serializer.serialize(input)
+
+      assert serialized == ~s|["foo","bar","baz","qux",["bleep","bloop"]]|
+    end
+
+    test "encodes keyword lists wrapped in a map" do
+      input = [foo: "bar", baz: "qux"]
+
+      {:ok, serialized} = Brook.Serializer.serialize(input)
+
+      assert serialized == ~s|{"keyword":true,"list":[["foo","bar"],["baz","qux"]]}|
     end
 
     test "returns error tuple when unable to parse input" do
