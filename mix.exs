@@ -4,7 +4,7 @@ defmodule Brook.Serializer.MixProject do
   def project do
     [
       app: :brook_serializer,
-      version: "2.2.1",
+      version: "2.2.2",
       elixir: "~> 1.8",
       description: description(),
       package: package(),
