@@ -47,8 +47,16 @@ defimpl Brook.Serializer.Protocol, for: List do
   import Brook.Serializer.Util
 
   def serialize(list) do
-    list
-    |> safe_transform(&Brook.Serializer.Protocol.serialize/1)
+    if Keyword.keyword?(list) do
+      {:ok, safe_list} =
+        list
+        |> Enum.map(fn {key, val} -> [key, val] end)
+        |> safe_transform(&Brook.Serializer.Protocol.serialize/1)
+
+      {:ok, %{"keyword" => true, "list" => safe_list}}
+    else
+      safe_transform(list, &Brook.Serializer.Protocol.serialize/1)
+    end
   end
 end
 
